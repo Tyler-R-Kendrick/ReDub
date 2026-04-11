@@ -341,4 +341,41 @@ describe("serialize()", () => {
       expect(xml).toContain('dapt:onScreen="false"');
     });
   });
+
+  describe("defensive serialization", () => {
+    it("throws on unexpected nested body nodes in malformed AST input", () => {
+      expect(() =>
+        serialize({
+          kind: "document",
+          body: {
+            kind: "body",
+            children: [
+              {
+                kind: "div",
+                children: [{ kind: "unexpected" } as never],
+              } as never,
+            ],
+          },
+        } as never)
+      ).toThrow(/unsupported child kind "unexpected" inside <div>/);
+    });
+
+    it("throws when malformed nested body nodes reach div serialization", () => {
+      expect(() =>
+        serialize({
+          kind: "document",
+          body: {
+            kind: "body",
+            children: [
+              {
+                kind: "div",
+                agent: "speaker-1",
+                children: [{ kind: "unexpected" } as never],
+              } as never,
+            ],
+          },
+        } as never)
+      ).toThrow(/unsupported child kind "unexpected" inside <div>/);
+    });
+  });
 });

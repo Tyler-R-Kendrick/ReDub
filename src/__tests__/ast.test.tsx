@@ -12,7 +12,7 @@ import type {
 } from "../types";
 
 describe("compile()", () => {
-  const ignoredNonElementChild = (() => "ignored") as unknown as React.ReactNode;
+  const nonElementChild = (() => "ignored") as unknown as React.ReactNode;
 
   describe("document root", () => {
     it("requires a <Redub> root element", () => {
@@ -105,7 +105,7 @@ describe("compile()", () => {
               {"Lead "}
               {7}
               <span>
-                {ignoredNonElementChild}
+                {nonElementChild}
                 <span begin="1s">nested</span>
               </span>
             </p>
@@ -364,11 +364,11 @@ describe("compile()", () => {
           <Redub.Head>
             {false}
             {true}
-            {ignoredNonElementChild}
+            {nonElementChild}
             <Redub.Metadata>
               {false}
               {true}
-              {ignoredNonElementChild}
+              {nonElementChild}
               <p />
             </Redub.Metadata>
             <div />
@@ -384,13 +384,13 @@ describe("compile()", () => {
             <p>
               {false}
               {true}
-              {ignoredNonElementChild}
+              {nonElementChild}
               <em />
               {"body "}
               <span>
                 {false}
                 {true}
-                {ignoredNonElementChild}
+                {nonElementChild}
                 <em />
                 nested
               </span>
