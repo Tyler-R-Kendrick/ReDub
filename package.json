@@ -1,0 +1,26 @@
+{
+  "name": "redub",
+  "version": "0.1.0",
+  "description": "A React-native authoring system for timed speech and narration, built on TTML2/DAPT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/react": "^18.3.3",
+    "jest": "^29.7.0",
+    "react": "^18.3.1",
+    "ts-jest": "^29.1.4",
+    "typescript": "^5.4.5"
+  }
+}
