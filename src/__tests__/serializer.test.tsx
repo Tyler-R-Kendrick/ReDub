@@ -49,6 +49,27 @@ describe("serialize()", () => {
       expect(xml).toContain('<span begin="1.5s"> world</span>');
     });
 
+    it("serializes text, nested spans, and nested divs", () => {
+      const xml = xmlFrom(
+        <Redub>
+          <div id="outer">
+            <div id="inner">
+              <p>
+                {"Lead "}
+                <span>
+                  inner
+                  <span begin="1s">nested</span>
+                </span>
+              </p>
+            </div>
+          </div>
+        </Redub>
+      );
+
+      expect(xml).toContain('<div id="outer"><div id="inner">');
+      expect(xml).toContain("<p>Lead <span>inner<span begin=\"1s\">nested</span></span></p>");
+    });
+
     it("escapes XML special characters in text", () => {
       const xml = xmlFrom(
         <Redub>
@@ -106,6 +127,19 @@ describe("serialize()", () => {
       );
       expect(xml).toContain('dapt:represents="audio.dialogue"');
     });
+
+    it("declares dapt namespace when a nested paragraph has langSrc", () => {
+      const xml = xmlFrom(
+        <Redub>
+          <div>
+            <p {...({ langSrc: "fr" } as object)} />
+          </div>
+        </Redub>
+      );
+
+      expect(xml).toContain("xmlns:dapt=");
+      expect(xml).toContain('dapt:langSrc="fr"');
+    });
   });
 
   describe("Remotion frame timing", () => {
@@ -140,6 +174,20 @@ describe("serialize()", () => {
       expect(xml).toContain('xml:id="character_1"');
       expect(xml).toContain('type="character"');
       expect(xml).toContain("ASSANE");
+    });
+
+    it("serializes an Agent without optional metadata as an empty name element", () => {
+      const xml = xmlFrom(
+        <Redub>
+          <Redub.Head>
+            <Redub.Metadata>
+              <Agent id="character_2" />
+            </Redub.Metadata>
+          </Redub.Head>
+        </Redub>
+      );
+
+      expect(xml).toContain('<ttm:agent xml:id="character_2"><ttm:name/></ttm:agent>');
     });
 
     it("serializes Pronunciation inside metadata with redub namespace", () => {
