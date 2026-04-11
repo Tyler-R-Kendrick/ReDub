@@ -271,4 +271,26 @@ describe("serialize()", () => {
       expect(xml).toContain('<span begin="0s">Hello</span>');
     });
   });
+
+  describe("onScreen attribute", () => {
+    it("serializes dapt:onScreen on <div> and declares xmlns:dapt", () => {
+      const xml = xmlFrom(
+        <Redub>
+          <div {...({ onScreen: true } as object)} />
+        </Redub>
+      );
+      expect(xml).toContain("xmlns:dapt=");
+      expect(xml).toContain('dapt:onScreen="true"');
+    });
+
+    it("serializes dapt:onScreen=false and declares xmlns:dapt", () => {
+      const xml = xmlFrom(
+        <Redub>
+          <div {...({ onScreen: false } as object)} />
+        </Redub>
+      );
+      expect(xml).toContain("xmlns:dapt=");
+      expect(xml).toContain('dapt:onScreen="false"');
+    });
+  });
 });

@@ -24,6 +24,16 @@ import type {
 
 /** Convert Remotion frame numbers to a TTML time expression ("Xs"). */
 function framesToTime(frames: number, fps: number): string {
+  if (!Number.isFinite(fps) || fps <= 0) {
+    throw new RangeError(
+      `framesToTime: fps must be a positive finite number, got ${fps}`
+    );
+  }
+  if (!Number.isFinite(frames)) {
+    throw new RangeError(
+      `framesToTime: frames must be a finite number, got ${frames}`
+    );
+  }
   const seconds = frames / fps;
   // Format with up to 3 decimal places, trimming trailing zeros.
   const formatted = seconds.toFixed(3).replace(/\.?0+$/, "");
@@ -117,6 +127,12 @@ function compileDivChildren(
     if (!React.isValidElement(child)) return;
 
     const el = child as React.ReactElement<Record<string, unknown>>;
+
+    if (el.type === Agent || el.type === Pronunciation) {
+      throw new Error(
+        `<${el.type === Agent ? "Agent" : "Pronunciation"}> may only appear inside <Redub.Metadata>, not inside a <div>.`
+      );
+    }
 
     if (el.type === "div") {
       result.push(compileDiv(el.props));
@@ -257,22 +273,6 @@ function compileHead(props: Record<string, unknown>): HeadNode {
   };
 }
 
-function compileBodyChildren(children: React.ReactNode): Array<DivNode> {
-  const result: Array<DivNode> = [];
-
-  React.Children.forEach(children, (child) => {
-    if (child == null || child === false) return;
-    if (!React.isValidElement(child)) return;
-
-    const el = child as React.ReactElement<Record<string, unknown>>;
-    if (el.type === "div") {
-      result.push(compileDiv(el.props));
-    }
-  });
-
-  return result;
-}
-
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -313,7 +313,16 @@ export function compile(
     const el = child as React.ReactElement<Record<string, unknown>>;
 
     if (el.type === Redub.Head) {
+      if (head !== undefined) {
+        throw new Error(
+          "<Redub> may only contain one <Redub.Head> element."
+        );
+      }
       head = compileHead(el.props);
+    } else if (el.type === Agent || el.type === Pronunciation) {
+      throw new Error(
+        `<${el.type === Agent ? "Agent" : "Pronunciation"}> may only appear inside <Redub.Metadata>, not as a direct child of <Redub>.`
+      );
     } else if (el.type === "div") {
       bodyChildren.push(compileDiv(el.props));
     }

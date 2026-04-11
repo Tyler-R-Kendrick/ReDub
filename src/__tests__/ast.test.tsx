@@ -221,5 +221,104 @@ describe("compile()", () => {
       expect(doc.head).toBeDefined();
       expect(doc.body.children).toHaveLength(1);
     });
+
+    it("throws when more than one <Redub.Head> is provided", () => {
+      expect(() =>
+        compile(
+          <Redub>
+            <Redub.Head />
+            <Redub.Head />
+          </Redub>
+        )
+      ).toThrow(/<Redub> may only contain one <Redub.Head>/);
+    });
+
+    it("throws when <Agent> is a direct child of <Redub>", () => {
+      expect(() =>
+        compile(
+          <Redub>
+            <Agent id="c1" />
+          </Redub>
+        )
+      ).toThrow(/<Agent> may only appear inside <Redub.Metadata>/);
+    });
+
+    it("throws when <Pronunciation> is a direct child of <Redub>", () => {
+      expect(() =>
+        compile(
+          <Redub>
+            <Pronunciation target="SQL" alias="sequel" />
+          </Redub>
+        )
+      ).toThrow(/<Pronunciation> may only appear inside <Redub.Metadata>/);
+    });
+  });
+
+  describe("misplaced metadata components", () => {
+    it("throws when <Agent> is placed inside a <div>", () => {
+      expect(() =>
+        compile(
+          <Redub>
+            <div>
+              <Agent id="c1" />
+            </div>
+          </Redub>
+        )
+      ).toThrow(/<Agent> may only appear inside <Redub.Metadata>/);
+    });
+
+    it("throws when <Pronunciation> is placed inside a <div>", () => {
+      expect(() =>
+        compile(
+          <Redub>
+            <div>
+              <Pronunciation target="SQL" alias="sequel" />
+            </div>
+          </Redub>
+        )
+      ).toThrow(/<Pronunciation> may only appear inside <Redub.Metadata>/);
+    });
+  });
+
+  describe("framesToTime validation", () => {
+    it("throws when fps is zero", () => {
+      expect(() =>
+        compile(
+          <Redub>
+            <div {...({ from: 0, to: 30, fps: 0 } as object)} />
+          </Redub>
+        )
+      ).toThrow(/fps must be a positive finite number/);
+    });
+
+    it("throws when fps is negative", () => {
+      expect(() =>
+        compile(
+          <Redub>
+            <div {...({ from: 0, to: 30, fps: -24 } as object)} />
+          </Redub>
+        )
+      ).toThrow(/fps must be a positive finite number/);
+    });
+
+    it("throws when fps is Infinity", () => {
+      expect(() =>
+        compile(
+          <Redub>
+            <div {...({ from: 0, to: 30, fps: Infinity } as object)} />
+          </Redub>
+        )
+      ).toThrow(/fps must be a positive finite number/);
+    });
+
+    it("throws when frames is NaN", () => {
+      expect(() =>
+        compile(
+          <Redub>
+            <div {...({ from: NaN, to: 30, fps: 30 } as object)} />
+          </Redub>
+        )
+      ).toThrow(/frames must be a finite number/);
+    });
   });
 });

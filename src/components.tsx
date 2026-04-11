@@ -3,7 +3,7 @@
  *
  * These are compile-time authoring components — they are not intended to
  * render to the DOM.  Pass a JSX tree rooted at <Redub> to compile() to
- * produce the DAPT AST, then serialise it with serialize().
+ * produce the DAPT AST, then serialize it with serialize().
  */
 import React from "react";
 

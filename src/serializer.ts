@@ -64,7 +64,8 @@ function hasDaptAttributes(doc: DocumentNode): boolean {
 }
 
 function divHasDaptAttributes(div: DivNode): boolean {
-  if (div.represents || div.agent || div.langSrc) return true;
+  if (div.represents || div.agent || div.langSrc || div.onScreen !== undefined)
+    return true;
   return div.children.some((child) => {
     if (child.kind === "div") return divHasDaptAttributes(child);
     if (child.kind === "p") return child.langSrc !== undefined;

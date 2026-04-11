@@ -9,8 +9,7 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "jest",
-    "lint": "eslint src --ext .ts,.tsx"
+    "test": "jest"
   },
   "peerDependencies": {
     "react": ">=18.0.0"
