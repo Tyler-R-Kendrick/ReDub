@@ -248,6 +248,24 @@ describe("serialize()", () => {
       const xml = xmlFrom(<Redub />);
       expect(xml).not.toContain("<head");
     });
+
+    it("serializes metadata from named slots", () => {
+      const xml = xmlFrom(
+        <Redub>
+          <Redub.Slot name="metadata">
+            <Agent id="slot-agent" />
+            <Pronunciation target="SQL" alias="sequel" />
+          </Redub.Slot>
+        </Redub>
+      );
+
+      expect(xml).toContain("<head>");
+      expect(xml).toContain("<metadata>");
+      expect(xml).toContain('xml:id="slot-agent"');
+      expect(xml).toContain('<redub:pronunciation target="SQL" alias="sequel"');
+      expect(xml).toContain("xmlns:ttm=");
+      expect(xml).toContain("xmlns:redub=");
+    });
   });
 
   describe("integration — PRD example", () => {

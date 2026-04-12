@@ -17,11 +17,13 @@
  * ```
  */
 
-export { Redub, Agent, Pronunciation } from "./components";
+export { Redub, Head, Metadata, Slot, Agent, Pronunciation } from "./components";
 export type {
   RedubProps,
   HeadProps,
   MetadataProps,
+  SlotName,
+  SlotProps,
   AgentProps,
   PronunciationProps,
 } from "./components";
