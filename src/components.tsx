@@ -24,16 +24,22 @@ export interface RedubProps {
 }
 
 export interface HeadProps {
+  /** HTML slot name (e.g. "head"). */
+  slot?: string;
   children?: React.ReactNode;
 }
 
 export interface MetadataProps {
+  /** HTML slot name (e.g. "metadata"). */
+  slot?: string;
   children?: React.ReactNode;
 }
 
 export interface AgentProps {
   /** Unique identifier for the agent. */
   id: string;
+  /** HTML slot name. */
+  slot?: string;
   /** Agent type (e.g. "character"). */
   type?: string;
   /** Display alias / name for the agent. */
@@ -43,6 +49,8 @@ export interface AgentProps {
 export interface PronunciationProps {
   /** The word or phrase whose pronunciation is being specified. */
   target: string;
+  /** HTML slot name. */
+  slot?: string;
   /** Alternative alias to substitute when speaking. */
   alias?: string;
   /** IPA phonetic representation. */
@@ -71,13 +79,13 @@ const RedubRoot: React.FC<RedubProps> = () => null;
 /**
  * Optional document head.  Must contain only <Redub.Metadata> children.
  */
-const Head: React.FC<HeadProps> = () => null;
+export const Head: React.FC<HeadProps> = () => null;
 
 /**
  * Metadata section inside the document head.
  * May contain <Agent> and <Pronunciation> elements.
  */
-const Metadata: React.FC<MetadataProps> = () => null;
+export const Metadata: React.FC<MetadataProps> = () => null;
 
 export const Redub = Object.assign(RedubRoot, { Head, Metadata });
 

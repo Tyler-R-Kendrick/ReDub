@@ -353,6 +353,69 @@ describe("compile()", () => {
         )
       ).toThrow(/<Pronunciation> may only appear inside <Redub.Metadata>, not as a direct child of <Redub.Head>/);
     });
+
+    it("compiles <Redub.Head slot=\"head\"> with nested metadata", () => {
+      const doc = compile(
+        <Redub>
+          <Redub.Head slot="head">
+            <Redub.Metadata>
+              <Agent id="slot-head-agent" />
+            </Redub.Metadata>
+          </Redub.Head>
+        </Redub>
+      );
+
+      expect(doc.head?.children).toHaveLength(1);
+      expect(doc.head?.children[0]).toEqual({
+        kind: "metadata",
+        children: [{ kind: "agent", id: "slot-head-agent", type: undefined, alias: undefined }],
+      });
+    });
+
+    it("compiles <Redub.Metadata slot=\"metadata\"> as slotted metadata", () => {
+      const doc = compile(
+        <Redub>
+          <Redub.Metadata slot="metadata">
+            <Agent id="slot-meta-agent" />
+            <Pronunciation target="SQL" alias="sequel" />
+          </Redub.Metadata>
+        </Redub>
+      );
+
+      expect(doc.head?.children).toHaveLength(1);
+      expect(doc.head?.children[0]).toEqual({
+        kind: "metadata",
+        children: [
+          { kind: "agent", id: "slot-meta-agent", type: undefined, alias: undefined },
+          { kind: "pronunciation", target: "SQL", alias: "sequel", ipa: undefined, xsampa: undefined },
+        ],
+      });
+    });
+
+    it("extends explicit <Redub.Head> with slotted metadata", () => {
+      const doc = compile(
+        <Redub>
+          <Redub.Head>
+            <Redub.Metadata>
+              <Agent id="existing-agent" />
+            </Redub.Metadata>
+          </Redub.Head>
+          <Redub.Metadata slot="metadata">
+            <Agent id="slotted-agent" />
+          </Redub.Metadata>
+        </Redub>
+      );
+
+      expect(doc.head?.children).toHaveLength(2);
+      expect(doc.head?.children[0].children[0]).toMatchObject({
+        kind: "agent",
+        id: "existing-agent",
+      });
+      expect(doc.head?.children[1].children[0]).toMatchObject({
+        kind: "agent",
+        id: "slotted-agent",
+      });
+    });
   });
 
   describe("misplaced metadata components", () => {

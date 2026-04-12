@@ -23,7 +23,7 @@ Supported document props:
 - `scriptType`
 - `scriptRepresents`
 
-### `Redub.Head` and `Redub.Metadata`
+### `Redub.Head`, `Redub.Metadata`, and HTML slots
 
 Optional metadata container for:
 
@@ -31,6 +31,13 @@ Optional metadata container for:
 - `<Pronunciation />`
 
 `<Agent />` and `<Pronunciation />` must be nested inside `<Redub.Metadata>`. Placing either component directly under `<Redub>` or `<Redub.Head>` throws a compiler error.
+
+You can also use HTML `slot` attributes for optional extension:
+
+- `<Redub.Head slot="head">...</Redub.Head>`
+- `<Redub.Metadata slot="metadata">...</Redub.Metadata>`
+
+`slot="metadata"` can be used on top-level `<Redub.Metadata>` to merge additional metadata into the compiled `<head>`.
 
 ### Body content
 
@@ -94,6 +101,26 @@ const document = compile(
 );
 
 const xml = serialize(document);
+```
+
+## Slot-based metadata example
+
+```tsx
+import { Redub, Agent, Pronunciation, compile } from "redub";
+
+const document = compile(
+  <Redub xmlLang="en">
+    <Redub.Metadata slot="metadata">
+      <Agent id="character_1" type="character" alias="ASSANE" />
+      <Pronunciation target="SQL" alias="sequel" />
+    </Redub.Metadata>
+    <div begin="10s" end="13s">
+      <p>
+        <span begin="0s">Hello</span>
+      </p>
+    </div>
+  </Redub>
+);
 ```
 
 ## Timing

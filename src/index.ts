@@ -17,7 +17,7 @@
  * ```
  */
 
-export { Redub, Agent, Pronunciation } from "./components";
+export { Redub, Head, Metadata, Agent, Pronunciation } from "./components";
 export type {
   RedubProps,
   HeadProps,

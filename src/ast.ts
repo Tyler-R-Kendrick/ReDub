@@ -259,17 +259,12 @@ function compileHeadChildren(children: React.ReactNode): Array<MetadataNode> {
 
     if (el.type === Redub.Metadata) {
       result.push(compileMetadata(el.props));
+      return;
     }
+
   });
 
   return result;
-}
-
-function compileHead(props: Record<string, unknown>): HeadNode {
-  return {
-    kind: "head",
-    children: compileHeadChildren(props.children as React.ReactNode),
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -302,7 +297,8 @@ export function compile(
   const props = element.props as Record<string, unknown>;
   const children = props.children as React.ReactNode;
 
-  let head: HeadNode | undefined;
+  let explicitHeadChildren: Array<MetadataNode> | undefined;
+  const slottedHeadChildren: Array<MetadataNode> = [];
   const bodyChildren: Array<DivNode> = [];
 
   React.Children.forEach(children, (child) => {
@@ -312,12 +308,19 @@ export function compile(
     const el = child as React.ReactElement<Record<string, unknown>>;
 
     if (el.type === Redub.Head) {
-      if (head !== undefined) {
+      if (explicitHeadChildren !== undefined) {
         throw new Error(
           "<Redub> may only contain one <Redub.Head> element."
         );
       }
-      head = compileHead(el.props);
+      explicitHeadChildren = compileHeadChildren(
+        el.props.children as React.ReactNode
+      );
+    } else if (
+      el.type === Redub.Metadata &&
+      (el.props.slot as string | undefined) === "metadata"
+    ) {
+      slottedHeadChildren.push(compileMetadata(el.props));
     } else if (el.type === Agent || el.type === Pronunciation) {
       throw new Error(
         `<${el.type === Agent ? "Agent" : "Pronunciation"}> may only appear inside <Redub.Metadata>, not as a direct child of <Redub>.`
@@ -330,6 +333,14 @@ export function compile(
   });
 
   const scriptRepresents = props.scriptRepresents as string[] | undefined;
+  const mergedHeadChildren = [
+    ...(explicitHeadChildren ?? []),
+    ...slottedHeadChildren,
+  ];
+  const head: HeadNode | undefined =
+    explicitHeadChildren !== undefined || slottedHeadChildren.length > 0
+      ? { kind: "head", children: mergedHeadChildren }
+      : undefined;
 
   return {
     kind: "document",

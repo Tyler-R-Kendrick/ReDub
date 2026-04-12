@@ -1,6 +1,14 @@
 /** @jsxImportSource react */
 import React from "react";
-import { Agent, Pronunciation, Redub, compile, serialize } from "../index";
+import {
+  Agent,
+  Head,
+  Metadata,
+  Pronunciation,
+  Redub,
+  compile,
+  serialize,
+} from "../index";
 import * as ast from "../ast";
 import * as components from "../components";
 import * as serializer from "../serializer";
@@ -10,16 +18,20 @@ describe("public API", () => {
     expect(compile).toBe(ast.compile);
     expect(serialize).toBe(serializer.serialize);
     expect(Redub).toBe(components.Redub);
+    expect(Head).toBe(components.Head);
+    expect(Metadata).toBe(components.Metadata);
     expect(Agent).toBe(components.Agent);
     expect(Pronunciation).toBe(components.Pronunciation);
   });
 
   it("renders authoring components as null when invoked directly", () => {
     expect(Redub({ xmlLang: "en" })).toBeNull();
-    expect(Redub.Head({ children: null })).toBeNull();
-    expect(Redub.Metadata({ children: null })).toBeNull();
-    expect(Agent({ id: "speaker-1" })).toBeNull();
-    expect(Pronunciation({ target: "SQL" })).toBeNull();
+    expect(Redub.Head({ slot: "head", children: null })).toBeNull();
+    expect(Redub.Metadata({ slot: "metadata", children: null })).toBeNull();
+    expect(Head({ slot: "head", children: null })).toBeNull();
+    expect(Metadata({ slot: "metadata", children: null })).toBeNull();
+    expect(Agent({ id: "speaker-1", slot: "metadata" })).toBeNull();
+    expect(Pronunciation({ target: "SQL", slot: "metadata" })).toBeNull();
   });
 
   it("supports compile and serialize via the package entrypoint", () => {
