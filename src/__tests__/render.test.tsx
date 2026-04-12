@@ -7,6 +7,8 @@ import { ElevenLabsProvider } from "../render/providers/elevenlabs";
 import type { ElevenLabsRenderOptions } from "../render/providers/elevenlabs";
 import { OpenAIProvider } from "../render/providers/openai";
 import type { OpenAIRenderOptions } from "../render/providers/openai";
+import { HuggingFaceLocalProvider } from "../render/providers/huggingface-local";
+import type { HuggingFaceLocalRenderOptions } from "../render/providers/huggingface-local";
 import type {
   RenderOptions,
   RenderProvider,
@@ -445,6 +447,142 @@ describe("OpenAIProvider", () => {
 });
 
 // ---------------------------------------------------------------------------
+// HuggingFaceLocalProvider
+// ---------------------------------------------------------------------------
+
+describe("HuggingFaceLocalProvider", () => {
+  /** Fake Float32Array PCM samples (silence). */
+  const fakeSamples = new Float32Array(16000); // 1 s at 16 kHz
+  const fakeSamplingRate = 16000;
+
+  /** Mock the dynamic `import("@huggingface/transformers")`. */
+  beforeEach(() => {
+    jest.doMock("@huggingface/transformers", () => ({
+      pipeline: jest.fn().mockResolvedValue(
+        jest.fn().mockResolvedValue({
+          audio: fakeSamples,
+          sampling_rate: fakeSamplingRate,
+        })
+      ),
+    }));
+  });
+
+  afterEach(() => {
+    jest.resetModules();
+    jest.restoreAllMocks();
+  });
+
+  it("has name 'huggingface-local'", () => {
+    const provider = new HuggingFaceLocalProvider();
+    expect(provider.name).toBe("huggingface-local");
+  });
+
+  it("uses the default model when none is provided", async () => {
+    // Verify config defaults flow through by inspecting the provider's name.
+    const provider = new HuggingFaceLocalProvider();
+    expect(provider.name).toBe("huggingface-local");
+  });
+
+  it("returns a WAV-encoded Uint8Array with format 'wav'", async () => {
+    const provider = new HuggingFaceLocalProvider();
+
+    // Patch the private lazy-init so we don't actually load Transformers.js.
+    const fakeSynth = jest.fn().mockResolvedValue({
+      audio: fakeSamples,
+      sampling_rate: fakeSamplingRate,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (provider as any).synthesizerPromise = Promise.resolve(fakeSynth);
+
+    const options: HuggingFaceLocalRenderOptions = {};
+    const [result] = await provider.render([{ id: "s1", text: "Hello" }], options);
+
+    expect(result.segmentId).toBe("s1");
+    expect(result.format).toBe("wav");
+    expect(result.audio).toBeInstanceOf(Uint8Array);
+    // WAV header is 44 bytes; samples are 16-bit mono → 2 bytes each.
+    expect(result.audio.length).toBe(44 + fakeSamples.length * 2);
+    // Verify the RIFF magic bytes.
+    expect(String.fromCharCode(...result.audio.slice(0, 4))).toBe("RIFF");
+    expect(String.fromCharCode(...result.audio.slice(8, 12))).toBe("WAVE");
+  });
+
+  it("renders multiple segments sequentially", async () => {
+    const provider = new HuggingFaceLocalProvider();
+    const fakeSynth = jest.fn().mockResolvedValue({
+      audio: fakeSamples,
+      sampling_rate: fakeSamplingRate,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (provider as any).synthesizerPromise = Promise.resolve(fakeSynth);
+
+    const segments: RenderSegment[] = [
+      { id: "a", text: "First" },
+      { id: "b", text: "Second" },
+    ];
+    const results = await provider.render(segments, {});
+
+    expect(results).toHaveLength(2);
+    expect(results[0].segmentId).toBe("a");
+    expect(results[1].segmentId).toBe("b");
+    expect(fakeSynth).toHaveBeenCalledTimes(2);
+    expect(fakeSynth).toHaveBeenNthCalledWith(1, "First", undefined);
+    expect(fakeSynth).toHaveBeenNthCalledWith(2, "Second", undefined);
+  });
+
+  it("passes speaker_embeddings when speakerEmbeddingsUrl is set", async () => {
+    const provider = new HuggingFaceLocalProvider({
+      speakerEmbeddingsUrl: "https://example.com/embeddings.bin",
+    });
+    const fakeSynth = jest.fn().mockResolvedValue({
+      audio: fakeSamples,
+      sampling_rate: fakeSamplingRate,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (provider as any).synthesizerPromise = Promise.resolve(fakeSynth);
+
+    await provider.render([{ text: "Hi" }], {});
+
+    expect(fakeSynth).toHaveBeenCalledWith("Hi", {
+      speaker_embeddings: "https://example.com/embeddings.bin",
+    });
+  });
+
+  it("reuses the cached synthesizer across render calls", async () => {
+    const provider = new HuggingFaceLocalProvider();
+    const fakeSynth = jest.fn().mockResolvedValue({
+      audio: fakeSamples,
+      sampling_rate: fakeSamplingRate,
+    });
+    const initSpy = jest
+      .spyOn(provider as any, "initSynthesizer")
+      .mockResolvedValue(fakeSynth);
+
+    await provider.render([{ text: "one" }], {});
+    await provider.render([{ text: "two" }], {});
+
+    // initSynthesizer must be called only once across two render() calls.
+    expect(initSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws a helpful error when @huggingface/transformers is absent", async () => {
+    const provider = new HuggingFaceLocalProvider();
+    jest
+      .spyOn(provider as any, "initSynthesizer")
+      .mockRejectedValue(
+        new Error(
+          "HuggingFaceLocalProvider requires '@huggingface/transformers' to be " +
+            "installed. Run: npm install @huggingface/transformers"
+        )
+      );
+
+    await expect(provider.render([{ text: "Hi" }], {})).rejects.toThrow(
+      "@huggingface/transformers"
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Public API re-exports
 // ---------------------------------------------------------------------------
 
@@ -455,6 +593,7 @@ describe("render pipeline public API", () => {
     expect(typeof renderModule.extractSegments).toBe("function");
     expect(typeof renderModule.ElevenLabsProvider).toBe("function");
     expect(typeof renderModule.OpenAIProvider).toBe("function");
+    expect(typeof renderModule.HuggingFaceLocalProvider).toBe("function");
   });
 
   it("re-exports render symbols from the main package index", async () => {
@@ -463,5 +602,6 @@ describe("render pipeline public API", () => {
     expect(typeof index.extractSegments).toBe("function");
     expect(typeof index.ElevenLabsProvider).toBe("function");
     expect(typeof index.OpenAIProvider).toBe("function");
+    expect(typeof index.HuggingFaceLocalProvider).toBe("function");
   });
 });

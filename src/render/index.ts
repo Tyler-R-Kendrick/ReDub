@@ -21,6 +21,13 @@
  *   new OpenAIProvider({ apiKey, voice: "nova" }),
  *   { format: "mp3" }
  * );
+ *
+ * // HuggingFace local — format is always "wav" (WAV-encoded PCM)
+ * const results = await render(
+ *   doc,
+ *   new HuggingFaceLocalProvider({ model: "Xenova/speecht5_tts" }),
+ *   {}
+ * );
  * ```
  */
 
@@ -29,6 +36,8 @@ export { ElevenLabsProvider } from "./providers/elevenlabs";
 export type { ElevenLabsConfig, ElevenLabsRenderOptions } from "./providers/elevenlabs";
 export { OpenAIProvider } from "./providers/openai";
 export type { OpenAIConfig, OpenAIRenderOptions, OpenAIVoice, OpenAITTSModel } from "./providers/openai";
+export { HuggingFaceLocalProvider } from "./providers/huggingface-local";
+export type { HuggingFaceLocalConfig, HuggingFaceLocalRenderOptions } from "./providers/huggingface-local";
 export type {
   AudioFormat,
   RenderOptions,

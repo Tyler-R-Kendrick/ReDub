@@ -34,6 +34,7 @@ export {
   extractSegments,
   ElevenLabsProvider,
   OpenAIProvider,
+  HuggingFaceLocalProvider,
 } from "./render";
 export type {
   AudioFormat,
@@ -47,6 +48,8 @@ export type {
   OpenAIRenderOptions,
   OpenAIVoice,
   OpenAITTSModel,
+  HuggingFaceLocalConfig,
+  HuggingFaceLocalRenderOptions,
 } from "./render";
 
 export type {
