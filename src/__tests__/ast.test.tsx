@@ -388,6 +388,7 @@ describe("compile()", () => {
           <Redub.Head>
             {false}
             {true}
+            {"ignored"}
             {nonElementChild}
             <Redub.Metadata>
               {false}
