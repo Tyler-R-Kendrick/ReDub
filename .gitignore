@@ -1,3 +1,5 @@
 node_modules/
 dist/
 coverage/
+.agents/skills/skill-creator/**/__pycache__
+.agents/skills/skill-creator/eval-viewer/__pycache__
