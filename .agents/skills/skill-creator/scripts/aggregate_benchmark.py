@@ -88,14 +88,18 @@ def load_run_results(benchmark_dir: Path) -> dict:
         if metadata_path.exists():
             try:
                 with open(metadata_path) as mf:
-                    eval_id = json.load(mf).get("eval_id", eval_idx)
+                    eval_meta = json.load(mf)
+                    eval_id = eval_meta.get("eval_id", eval_idx)
+                    eval_name = eval_meta.get("eval_name", f"Eval {eval_id}")
             except (json.JSONDecodeError, OSError):
                 eval_id = eval_idx
+                eval_name = f"Eval {eval_id}"
         else:
             try:
                 eval_id = int(eval_dir.name.split("-")[1])
             except ValueError:
                 eval_id = eval_idx
+            eval_name = f"Eval {eval_id}"
 
         # Discover config directories dynamically rather than hardcoding names
         for config_dir in sorted(eval_dir.iterdir()):
@@ -126,6 +130,7 @@ def load_run_results(benchmark_dir: Path) -> dict:
                 # Extract metrics
                 result = {
                     "eval_id": eval_id,
+                    "eval_name": eval_name,
                     "run_number": run_number,
                     "pass_rate": grading.get("summary", {}).get("pass_rate", 0.0),
                     "passed": grading.get("summary", {}).get("passed", 0),
@@ -237,6 +242,7 @@ def generate_benchmark(benchmark_dir: Path, skill_name: str = "", skill_path: st
         for result in results[config]:
             runs.append({
                 "eval_id": result["eval_id"],
+                "eval_name": result["eval_name"],
                 "configuration": config,
                 "run_number": result["run_number"],
                 "result": {
@@ -260,6 +266,18 @@ def generate_benchmark(benchmark_dir: Path, skill_name: str = "", skill_path: st
         for r in config
     ))
 
+    # Compute runs_per_configuration from the actual discovered data
+    runs_per_config_counts = [
+        len(config_runs)
+        for config_runs in results.values()
+        if config_runs
+    ]
+    if runs_per_config_counts and len(set(runs_per_config_counts)) == 1:
+        runs_per_configuration = runs_per_config_counts[0]
+    else:
+        # Mixed or unknown — omit the field to avoid misleading callers
+        runs_per_configuration = None
+
     benchmark = {
         "metadata": {
             "skill_name": skill_name or "<skill-name>",
@@ -268,7 +286,7 @@ def generate_benchmark(benchmark_dir: Path, skill_name: str = "", skill_path: st
             "analyzer_model": "<model-name>",
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "evals_run": eval_ids,
-            "runs_per_configuration": 3
+            **({"runs_per_configuration": runs_per_configuration} if runs_per_configuration is not None else {}),
         },
         "runs": runs,
         "run_summary": run_summary,

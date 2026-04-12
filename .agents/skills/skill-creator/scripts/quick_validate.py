@@ -6,8 +6,53 @@ Quick validation script for skills - minimal version
 import sys
 import os
 import re
-import yaml
 from pathlib import Path
+
+def _parse_frontmatter(text: str) -> dict:
+    """Parse simple YAML-style frontmatter without external dependencies.
+
+    Handles the subset of YAML used in SKILL.md files:
+    - Plain scalar values:  key: value
+    - Quoted scalars:       key: "value" or key: 'value'
+    - Block scalars (>, >-, |, |-) with indented continuation lines
+    """
+    result: dict = {}
+    lines = text.split("\n")
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        # Skip blank lines and comment lines
+        if not line.strip() or line.strip().startswith("#"):
+            i += 1
+            continue
+        # Skip indented lines (they belong to a previous block scalar)
+        if line.startswith(" ") or line.startswith("\t"):
+            i += 1
+            continue
+        m = re.match(r'^([A-Za-z0-9_-]+)\s*:\s*(.*)', line)
+        if not m:
+            i += 1
+            continue
+        key = m.group(1)
+        value_raw = m.group(2).strip()
+        # Block scalar indicators
+        if value_raw in (">", "|", ">-", "|-"):
+            continuation: list[str] = []
+            i += 1
+            while i < len(lines) and (lines[i].startswith("  ") or lines[i].startswith("\t")):
+                continuation.append(lines[i].strip())
+                i += 1
+            result[key] = " ".join(continuation)
+            continue
+        # Quoted string
+        if (value_raw.startswith('"') and value_raw.endswith('"')) or \
+           (value_raw.startswith("'") and value_raw.endswith("'")):
+            result[key] = value_raw[1:-1]
+        else:
+            result[key] = value_raw
+        i += 1
+    return result
+
 
 def validate_skill(skill_path):
     """Basic validation of a skill"""
@@ -30,12 +75,12 @@ def validate_skill(skill_path):
 
     frontmatter_text = match.group(1)
 
-    # Parse YAML frontmatter
+    # Parse frontmatter using a minimal key-value parser (no PyYAML dependency)
     try:
-        frontmatter = yaml.safe_load(frontmatter_text)
+        frontmatter = _parse_frontmatter(frontmatter_text)
         if not isinstance(frontmatter, dict):
             return False, "Frontmatter must be a YAML dictionary"
-    except yaml.YAMLError as e:
+    except Exception as e:
         return False, f"Invalid YAML in frontmatter: {e}"
 
     # Define allowed properties

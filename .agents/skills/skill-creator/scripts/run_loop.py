@@ -33,13 +33,20 @@ def split_eval_set(eval_set: list[dict], holdout: float, seed: int = 42) -> tupl
     random.shuffle(trigger)
     random.shuffle(no_trigger)
 
-    # Calculate split points
-    n_trigger_test = max(1, int(len(trigger) * holdout))
-    n_no_trigger_test = max(1, int(len(no_trigger) * holdout))
+    # Calculate split points, ensuring at least one example per class stays in train
+    n_trigger_test = min(max(1, int(len(trigger) * holdout)), max(0, len(trigger) - 1))
+    n_no_trigger_test = min(max(1, int(len(no_trigger) * holdout)), max(0, len(no_trigger) - 1))
 
     # Split
     test_set = trigger[:n_trigger_test] + no_trigger[:n_no_trigger_test]
     train_set = trigger[n_trigger_test:] + no_trigger[n_no_trigger_test:]
+
+    if not train_set:
+        raise ValueError(
+            f"split_eval_set produced an empty train set (trigger={len(trigger)}, "
+            f"no_trigger={len(no_trigger)}, holdout={holdout}). "
+            "Provide a larger eval set or reduce holdout."
+        )
 
     return train_set, test_set
 

@@ -1,5 +1,5 @@
 ---
-name: ReDub-docs
+name: redub-docs
 description: >-
   Use this skill whenever the user wants to create, author, or generate timed speech scripts,
   audio dubbing scripts, narration tracks, or any kind of synchronized audio content using the
