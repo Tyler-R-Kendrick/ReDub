@@ -5,7 +5,7 @@
  */
 import type {
   AudioFormat,
-  RenderConfig,
+  RenderOptions,
   RenderProvider,
   RenderResult,
   RenderSegment,
@@ -22,6 +22,12 @@ export interface ElevenLabsConfig {
    * @default "eleven_multilingual_v2"
    */
   modelId?: string;
+}
+
+/** Provider-specific render options for ElevenLabs. */
+export interface ElevenLabsRenderOptions extends RenderOptions {
+  /** Output audio format. */
+  format: AudioFormat;
 }
 
 const ELEVENLABS_BASE_URL = "https://api.elevenlabs.io/v1";
@@ -49,7 +55,7 @@ function toElevenLabsFormat(format: AudioFormat): string {
  * const results = await render(doc, provider, { format: "mp3" });
  * ```
  */
-export class ElevenLabsProvider implements RenderProvider {
+export class ElevenLabsProvider implements RenderProvider<ElevenLabsRenderOptions> {
   readonly name = "elevenlabs";
 
   private readonly config: ElevenLabsConfig;
@@ -60,16 +66,16 @@ export class ElevenLabsProvider implements RenderProvider {
 
   async render(
     segments: RenderSegment[],
-    renderConfig: RenderConfig
+    options: ElevenLabsRenderOptions
   ): Promise<RenderResult[]> {
     return Promise.all(
-      segments.map((seg) => this.renderSegment(seg, renderConfig))
+      segments.map((seg) => this.renderSegment(seg, options))
     );
   }
 
   private async renderSegment(
     segment: RenderSegment,
-    renderConfig: RenderConfig
+    options: ElevenLabsRenderOptions
   ): Promise<RenderResult> {
     const { apiKey, voiceId, modelId = "eleven_multilingual_v2" } = this.config;
 
@@ -84,7 +90,7 @@ export class ElevenLabsProvider implements RenderProvider {
         body: JSON.stringify({
           text: segment.text,
           model_id: modelId,
-          output_format: toElevenLabsFormat(renderConfig.format),
+          output_format: toElevenLabsFormat(options.format),
         }),
       }
     );
@@ -99,7 +105,7 @@ export class ElevenLabsProvider implements RenderProvider {
     return {
       segmentId: segment.id,
       audio: new Uint8Array(buffer),
-      format: renderConfig.format,
+      format: options.format,
     };
   }
 }

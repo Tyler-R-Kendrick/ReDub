@@ -37,12 +37,14 @@ export {
 } from "./render";
 export type {
   AudioFormat,
-  RenderConfig,
+  RenderOptions,
   RenderSegment,
   RenderResult,
   RenderProvider,
   ElevenLabsConfig,
+  ElevenLabsRenderOptions,
   OpenAIConfig,
+  OpenAIRenderOptions,
   OpenAIVoice,
   OpenAITTSModel,
 } from "./render";

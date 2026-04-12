@@ -4,9 +4,11 @@ import { compile } from "../ast";
 import { Redub } from "../components";
 import { extractSegments, render } from "../render/pipeline";
 import { ElevenLabsProvider } from "../render/providers/elevenlabs";
+import type { ElevenLabsRenderOptions } from "../render/providers/elevenlabs";
 import { OpenAIProvider } from "../render/providers/openai";
+import type { OpenAIRenderOptions } from "../render/providers/openai";
 import type {
-  RenderConfig,
+  RenderOptions,
   RenderProvider,
   RenderResult,
   RenderSegment,
@@ -21,17 +23,17 @@ function makeAudio(size = 4): Uint8Array {
 }
 
 /** Minimal mock provider that echoes segments back as fake audio. */
-function makeMockProvider(name = "mock"): RenderProvider {
+function makeMockProvider(name = "mock"): RenderProvider<RenderOptions> {
   return {
     name,
     async render(
       segments: RenderSegment[],
-      config: RenderConfig
+      _options: RenderOptions
     ): Promise<RenderResult[]> {
       return segments.map((seg) => ({
         segmentId: seg.id,
         audio: makeAudio(),
-        format: config.format,
+        format: "mp3",
       }));
     },
   };
@@ -182,11 +184,9 @@ describe("extractSegments()", () => {
 // ---------------------------------------------------------------------------
 
 describe("render()", () => {
-  const config: RenderConfig = { format: "mp3" };
-
   it("returns an empty array when the document has no text", async () => {
     const doc = compile(<Redub />);
-    const results = await render(doc, makeMockProvider(), config);
+    const results = await render(doc, makeMockProvider(), {});
     expect(results).toEqual([]);
   });
 
@@ -203,29 +203,14 @@ describe("render()", () => {
         </div>
       </Redub>
     );
-    const results = await render(doc, makeMockProvider(), config);
+    const results = await render(doc, makeMockProvider(), {});
     expect(results).toHaveLength(2);
     expect(results[0].segmentId).toBe("p1");
     expect(results[1].segmentId).toBe("p2");
   });
 
-  it("forwards the config format to the provider", async () => {
-    const doc = compile(
-      <Redub>
-        <div>
-          <p>
-            <span>Hi</span>
-          </p>
-        </div>
-      </Redub>
-    );
-    const wavConfig: RenderConfig = { format: "wav" };
-    const results = await render(doc, makeMockProvider(), wavConfig);
-    expect(results[0].format).toBe("wav");
-  });
-
   it("propagates provider errors", async () => {
-    const failProvider: RenderProvider = {
+    const failProvider: RenderProvider<RenderOptions> = {
       name: "failing",
       render: async () => {
         throw new Error("provider failure");
@@ -240,7 +225,7 @@ describe("render()", () => {
         </div>
       </Redub>
     );
-    await expect(render(doc, failProvider, config)).rejects.toThrow(
+    await expect(render(doc, failProvider, {})).rejects.toThrow(
       "provider failure"
     );
   });
@@ -278,7 +263,8 @@ describe("ElevenLabsProvider", () => {
       voiceId: "voice-abc",
     });
     const segments: RenderSegment[] = [{ text: "Hello" }];
-    await provider.render(segments, { format: "mp3" });
+    const options: ElevenLabsRenderOptions = { format: "mp3" };
+    await provider.render(segments, options);
 
     expect(fetch).toHaveBeenCalledTimes(1);
     const [url, init] = (fetch as jest.Mock).mock.calls[0];
@@ -295,7 +281,7 @@ describe("ElevenLabsProvider", () => {
     });
     const segments: RenderSegment[] = [{ text: "Test" }];
 
-    const cases: Array<[string, string]> = [
+    const cases: Array<[ElevenLabsRenderOptions["format"], string]> = [
       ["mp3", "mp3_44100_128"],
       ["wav", "pcm_44100"],
       ["ogg", "ogg_vorbis_44100_128"],
@@ -305,7 +291,7 @@ describe("ElevenLabsProvider", () => {
 
     for (const [format, expectedOutputFormat] of cases) {
       (fetch as jest.Mock).mockClear();
-      await provider.render(segments, { format: format as any });
+      await provider.render(segments, { format });
       const body = JSON.parse(
         (fetch as jest.Mock).mock.calls[0][1].body as string
       );
@@ -333,9 +319,10 @@ describe("ElevenLabsProvider", () => {
 
   it("returns audio bytes and preserves segmentId", async () => {
     const provider = new ElevenLabsProvider({ apiKey: "k", voiceId: "v" });
+    const options: ElevenLabsRenderOptions = { format: "mp3" };
     const [result] = await provider.render(
       [{ id: "seg-1", text: "Hi" }],
-      { format: "mp3" }
+      options
     );
     expect(result.segmentId).toBe("seg-1");
     expect(result.audio).toBeInstanceOf(Uint8Array);
@@ -381,7 +368,8 @@ describe("OpenAIProvider", () => {
 
   it("calls the OpenAI speech API with the correct URL and headers", async () => {
     const provider = new OpenAIProvider({ apiKey: "sk-test", voice: "alloy" });
-    await provider.render([{ text: "Hello" }], { format: "mp3" });
+    const options: OpenAIRenderOptions = { format: "mp3" };
+    await provider.render([{ text: "Hello" }], options);
 
     const [url, init] = (fetch as jest.Mock).mock.calls[0];
     expect(url).toContain("/audio/speech");
@@ -394,7 +382,7 @@ describe("OpenAIProvider", () => {
     const provider = new OpenAIProvider({ apiKey: "k", voice: "echo" });
     const segments: RenderSegment[] = [{ text: "Test" }];
 
-    const cases: Array<[string, string]> = [
+    const cases: Array<[OpenAIRenderOptions["format"], string]> = [
       ["mp3", "mp3"],
       ["wav", "wav"],
       ["ogg", "opus"],
@@ -404,7 +392,7 @@ describe("OpenAIProvider", () => {
 
     for (const [format, expectedResponseFormat] of cases) {
       (fetch as jest.Mock).mockClear();
-      await provider.render(segments, { format: format as any });
+      await provider.render(segments, { format });
       const body = JSON.parse(
         (fetch as jest.Mock).mock.calls[0][1].body as string
       );
@@ -432,9 +420,10 @@ describe("OpenAIProvider", () => {
 
   it("returns audio bytes and preserves segmentId", async () => {
     const provider = new OpenAIProvider({ apiKey: "k", voice: "onyx" });
+    const options: OpenAIRenderOptions = { format: "wav" };
     const [result] = await provider.render(
       [{ id: "seg-2", text: "World" }],
-      { format: "wav" }
+      options
     );
     expect(result.segmentId).toBe("seg-2");
     expect(result.audio).toBeInstanceOf(Uint8Array);

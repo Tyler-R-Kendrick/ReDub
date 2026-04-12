@@ -5,11 +5,13 @@
 /** Supported output audio formats. */
 export type AudioFormat = "mp3" | "wav" | "ogg" | "flac" | "aac";
 
-/** Common configuration shared across all render providers. */
-export interface RenderConfig {
-  /** Output audio format (e.g. "mp3", "wav"). */
-  format: AudioFormat;
-}
+/**
+ * Base options type for all render providers.
+ *
+ * Concrete providers extend this with their own provider-specific options
+ * (e.g. output format, quality settings) following the options DI pattern.
+ */
+export interface RenderOptions {}
 
 /**
  * A discrete segment of text to be synthesised by a render provider.
@@ -41,10 +43,13 @@ export interface RenderResult {
 /**
  * Interface that all render providers must implement.
  *
- * A provider is responsible for converting an array of RenderSegments
- * into audio using a specific TTS back-end (e.g. ElevenLabs, OpenAI).
+ * `TOptions` is the provider-specific options type (must extend `RenderOptions`).
+ * Callers pass a concrete provider and matching options, giving each provider
+ * full control over its own configuration surface (Liskov substitution).
+ *
+ * @template TOptions Provider-specific options type.
  */
-export interface RenderProvider {
+export interface RenderProvider<TOptions extends RenderOptions = RenderOptions> {
   /** Human-readable name of the provider (e.g. "elevenlabs"). */
   readonly name: string;
 
@@ -54,6 +59,6 @@ export interface RenderProvider {
    */
   render(
     segments: RenderSegment[],
-    config: RenderConfig
+    options: TOptions
   ): Promise<RenderResult[]>;
 }

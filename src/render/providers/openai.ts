@@ -9,7 +9,7 @@
  */
 import type {
   AudioFormat,
-  RenderConfig,
+  RenderOptions,
   RenderProvider,
   RenderResult,
   RenderSegment,
@@ -40,6 +40,12 @@ export interface OpenAIConfig {
   model?: OpenAITTSModel;
 }
 
+/** Provider-specific render options for OpenAI. */
+export interface OpenAIRenderOptions extends RenderOptions {
+  /** Output audio format. */
+  format: AudioFormat;
+}
+
 const OPENAI_BASE_URL = "https://api.openai.com/v1";
 
 /** Maps AudioFormat to an OpenAI response_format identifier. */
@@ -65,7 +71,7 @@ function toOpenAIFormat(format: AudioFormat): string {
  * const results = await render(doc, provider, { format: "mp3" });
  * ```
  */
-export class OpenAIProvider implements RenderProvider {
+export class OpenAIProvider implements RenderProvider<OpenAIRenderOptions> {
   readonly name = "openai";
 
   private readonly config: OpenAIConfig;
@@ -76,16 +82,16 @@ export class OpenAIProvider implements RenderProvider {
 
   async render(
     segments: RenderSegment[],
-    renderConfig: RenderConfig
+    options: OpenAIRenderOptions
   ): Promise<RenderResult[]> {
     return Promise.all(
-      segments.map((seg) => this.renderSegment(seg, renderConfig))
+      segments.map((seg) => this.renderSegment(seg, options))
     );
   }
 
   private async renderSegment(
     segment: RenderSegment,
-    renderConfig: RenderConfig
+    options: OpenAIRenderOptions
   ): Promise<RenderResult> {
     const { apiKey, voice, model = "tts-1" } = this.config;
 
@@ -99,7 +105,7 @@ export class OpenAIProvider implements RenderProvider {
         model,
         input: segment.text,
         voice,
-        response_format: toOpenAIFormat(renderConfig.format),
+        response_format: toOpenAIFormat(options.format),
       }),
     });
 
@@ -113,7 +119,7 @@ export class OpenAIProvider implements RenderProvider {
     return {
       segmentId: segment.id,
       audio: new Uint8Array(buffer),
-      format: renderConfig.format,
+      format: options.format,
     };
   }
 }

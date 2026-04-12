@@ -8,14 +8,14 @@
  *
  * const doc = compile(<Redub xmlLang="en">…</Redub>);
  *
- * // ElevenLabs
+ * // ElevenLabs — format is part of ElevenLabsRenderOptions
  * const results = await render(
  *   doc,
  *   new ElevenLabsProvider({ apiKey, voiceId }),
  *   { format: "mp3" }
  * );
  *
- * // OpenAI
+ * // OpenAI — format is part of OpenAIRenderOptions
  * const results = await render(
  *   doc,
  *   new OpenAIProvider({ apiKey, voice: "nova" }),
@@ -26,12 +26,12 @@
 
 export { render, extractSegments } from "./pipeline";
 export { ElevenLabsProvider } from "./providers/elevenlabs";
-export type { ElevenLabsConfig } from "./providers/elevenlabs";
+export type { ElevenLabsConfig, ElevenLabsRenderOptions } from "./providers/elevenlabs";
 export { OpenAIProvider } from "./providers/openai";
-export type { OpenAIConfig, OpenAIVoice, OpenAITTSModel } from "./providers/openai";
+export type { OpenAIConfig, OpenAIRenderOptions, OpenAIVoice, OpenAITTSModel } from "./providers/openai";
 export type {
   AudioFormat,
-  RenderConfig,
+  RenderOptions,
   RenderSegment,
   RenderResult,
   RenderProvider,

@@ -3,7 +3,7 @@
  * delegates synthesis to a RenderProvider.
  */
 import type { DocumentNode, DivNode, PNode, SpanNode, TextNode } from "../types";
-import type { RenderConfig, RenderProvider, RenderResult, RenderSegment } from "./types";
+import type { RenderOptions, RenderProvider, RenderResult, RenderSegment } from "./types";
 
 // ---------------------------------------------------------------------------
 // Internal helpers — text extraction
@@ -69,6 +69,9 @@ export function extractSegments(doc: DocumentNode): RenderSegment[] {
  * Text is extracted from every `<p>` in the document body and sent to the
  * provider for synthesis. Results are returned in document order.
  *
+ * The `options` type is inferred from the provider, so each provider's own
+ * options type is enforced at the call site.
+ *
  * @example
  * ```ts
  * import { compile } from "redub";
@@ -78,11 +81,11 @@ export function extractSegments(doc: DocumentNode): RenderSegment[] {
  * const results = await render(doc, new ElevenLabsProvider({ apiKey, voiceId }), { format: "mp3" });
  * ```
  */
-export async function render(
+export async function render<TOptions extends RenderOptions>(
   doc: DocumentNode,
-  provider: RenderProvider,
-  config: RenderConfig
+  provider: RenderProvider<TOptions>,
+  options: TOptions
 ): Promise<RenderResult[]> {
   const segments = extractSegments(doc);
-  return provider.render(segments, config);
+  return provider.render(segments, options);
 }
