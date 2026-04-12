@@ -54,6 +54,10 @@ function element(
   return `<${tag}${attrStr}>${children}</${tag}>`;
 }
 
+function unsupportedDivChildKind(kind: string): never {
+  throw new Error(`serialize() encountered unsupported child kind "${kind}" inside <div>.`);
+}
+
 // ---------------------------------------------------------------------------
 // Node detectors (decide which optional namespaces are required)
 // ---------------------------------------------------------------------------
@@ -67,9 +71,14 @@ function divHasDaptAttributes(div: DivNode): boolean {
   if (div.represents || div.agent || div.langSrc || div.onScreen !== undefined)
     return true;
   return div.children.some((child) => {
-    if (child.kind === "div") return divHasDaptAttributes(child);
-    if (child.kind === "p") return child.langSrc !== undefined;
-    return false;
+    switch (child.kind) {
+      case "div":
+        return divHasDaptAttributes(child);
+      case "p":
+        return child.langSrc !== undefined;
+      default:
+        return unsupportedDivChildKind((child as { kind: string }).kind);
+    }
   });
 }
 
@@ -139,7 +148,16 @@ function serializeDiv(node: DivNode): string {
     "dapt:langSrc": node.langSrc,
   };
   const children = node.children
-    .map((c) => (c.kind === "div" ? serializeDiv(c) : serializeP(c)))
+    .map((c) => {
+      switch (c.kind) {
+        case "div":
+          return serializeDiv(c);
+        case "p":
+          return serializeP(c);
+        default:
+          return unsupportedDivChildKind((c as { kind: string }).kind);
+      }
+    })
     .join("");
   return element("div", attrs, children);
 }

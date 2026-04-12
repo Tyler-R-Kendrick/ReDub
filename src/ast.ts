@@ -82,11 +82,8 @@ function compileSpanChildren(
       return;
     }
 
-    if (!React.isValidElement(child)) return;
-
-    const el = child as React.ReactElement<Record<string, unknown>>;
-    if (el.type === "span") {
-      result.push(compileSpan(el.props));
+    if (React.isValidElement(child) && child.type === "span") {
+      result.push(compileSpan(child.props as Record<string, unknown>));
     }
   });
 
@@ -106,11 +103,8 @@ function compilePChildren(
       return;
     }
 
-    if (!React.isValidElement(child)) return;
-
-    const el = child as React.ReactElement<Record<string, unknown>>;
-    if (el.type === "span") {
-      result.push(compileSpan(el.props));
+    if (React.isValidElement(child) && child.type === "span") {
+      result.push(compileSpan(child.props as Record<string, unknown>));
     }
   });
 
@@ -229,14 +223,11 @@ function compileMetadataChildren(
 
   React.Children.forEach(children, (child) => {
     if (child == null || child === false) return;
-    if (!React.isValidElement(child)) return;
 
-    const el = child as React.ReactElement<Record<string, unknown>>;
-
-    if (el.type === Agent) {
-      result.push(compileAgent(el.props));
-    } else if (el.type === Pronunciation) {
-      result.push(compilePronunciation(el.props));
+    if (React.isValidElement(child) && child.type === Agent) {
+      result.push(compileAgent(child.props as Record<string, unknown>));
+    } else if (React.isValidElement(child) && child.type === Pronunciation) {
+      result.push(compilePronunciation(child.props as Record<string, unknown>));
     }
   });
 
@@ -255,9 +246,17 @@ function compileHeadChildren(children: React.ReactNode): Array<MetadataNode> {
 
   React.Children.forEach(children, (child) => {
     if (child == null || child === false) return;
+
     if (!React.isValidElement(child)) return;
 
     const el = child as React.ReactElement<Record<string, unknown>>;
+
+    if (el.type === Agent || el.type === Pronunciation) {
+      throw new Error(
+        `<${el.type === Agent ? "Agent" : "Pronunciation"}> may only appear inside <Redub.Metadata>, not as a direct child of <Redub.Head>.`
+      );
+    }
+
     if (el.type === Redub.Metadata) {
       result.push(compileMetadata(el.props));
     }

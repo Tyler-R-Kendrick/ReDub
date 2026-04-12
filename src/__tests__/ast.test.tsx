@@ -12,6 +12,8 @@ import type {
 } from "../types";
 
 describe("compile()", () => {
+  const nonElementChild = (() => "ignored") as unknown as React.ReactNode;
+
   describe("document root", () => {
     it("requires a <Redub> root element", () => {
       expect(() =>
@@ -95,6 +97,48 @@ describe("compile()", () => {
       expect(span2.begin).toBe("1.5s");
     });
 
+    it("compiles inline text and nested spans while ignoring unsupported span children", () => {
+      const doc = compile(
+        <Redub>
+          <div>
+            <p>
+              {"Lead "}
+              {7}
+              <span>
+                {nonElementChild}
+                <span begin="1s">nested</span>
+              </span>
+            </p>
+          </div>
+        </Redub>
+      );
+
+      const p = (doc.body.children[0] as DivNode).children[0] as PNode;
+      expect(p.children).toEqual([
+        { kind: "text", value: "Lead " },
+        { kind: "text", value: "7" },
+        {
+          kind: "span",
+          id: undefined,
+          begin: undefined,
+          end: undefined,
+          dur: undefined,
+          xmlLang: undefined,
+          children: [
+            {
+              kind: "span",
+              id: undefined,
+              begin: "1s",
+              end: undefined,
+              dur: undefined,
+              xmlLang: undefined,
+              children: [{ kind: "text", value: "nested" }],
+            },
+          ],
+        },
+      ]);
+    });
+
     it("compiles div agent and represents attributes", () => {
       const doc = compile(
         <Redub>
@@ -162,6 +206,39 @@ describe("compile()", () => {
       const div = doc.body.children[0] as DivNode;
       expect(div.begin).toBe("0.333s");
       expect(div.end).toBe("0.667s");
+    });
+
+    it("keeps explicit timing props when remotion timing is incomplete", () => {
+      const doc = compile(
+        <Redub>
+          <div begin="2s" end="4s" dur="2s" {...({ from: 60 } as object)} />
+        </Redub>
+      );
+
+      const div = doc.body.children[0] as DivNode;
+      expect(div.begin).toBe("2s");
+      expect(div.end).toBe("4s");
+      expect(div.dur).toBe("2s");
+    });
+
+    it("supports one-sided remotion timing conversions", () => {
+      const doc = compile(
+        <Redub>
+          <div {...({ from: 30, fps: 30 } as object)} />
+          <div {...({ to: 45, fps: 30 } as object)} />
+        </Redub>
+      );
+
+      expect(doc.body.children[0]).toMatchObject({
+        kind: "div",
+        begin: "1s",
+        end: undefined,
+      });
+      expect(doc.body.children[1]).toMatchObject({
+        kind: "div",
+        begin: undefined,
+        end: "1.5s",
+      });
     });
   });
 
@@ -252,6 +329,30 @@ describe("compile()", () => {
         )
       ).toThrow(/<Pronunciation> may only appear inside <Redub.Metadata>/);
     });
+
+    it("throws when <Agent> is a direct child of <Redub.Head>", () => {
+      expect(() =>
+        compile(
+          <Redub>
+            <Redub.Head>
+              <Agent id="c1" />
+            </Redub.Head>
+          </Redub>
+        )
+      ).toThrow(/<Agent> may only appear inside <Redub.Metadata>, not as a direct child of <Redub.Head>/);
+    });
+
+    it("throws when <Pronunciation> is a direct child of <Redub.Head>", () => {
+      expect(() =>
+        compile(
+          <Redub>
+            <Redub.Head>
+              <Pronunciation target="SQL" alias="sequel" />
+            </Redub.Head>
+          </Redub>
+        )
+      ).toThrow(/<Pronunciation> may only appear inside <Redub.Metadata>, not as a direct child of <Redub.Head>/);
+    });
   });
 
   describe("misplaced metadata components", () => {
@@ -277,6 +378,65 @@ describe("compile()", () => {
           </Redub>
         )
       ).toThrow(/<Pronunciation> may only appear inside <Redub.Metadata>/);
+    });
+
+    it("ignores empty and unsupported children across document sections", () => {
+      const doc = compile(
+        <Redub>
+          {false}
+          {true}
+          <Redub.Head>
+            {false}
+            {true}
+            {"ignored"}
+            {nonElementChild}
+            <Redub.Metadata>
+              {false}
+              {true}
+              {nonElementChild}
+              <p />
+            </Redub.Metadata>
+            <div />
+          </Redub.Head>
+          {"text"}
+          <p />
+          <span />
+          <div id="kept">
+            {false}
+            {true}
+            {"ignored"}
+            <em />
+            <p>
+              {false}
+              {true}
+              {nonElementChild}
+              <em />
+              {"body "}
+              <span>
+                {false}
+                {true}
+                {nonElementChild}
+                <em />
+                nested
+              </span>
+            </p>
+          </div>
+        </Redub>
+      );
+
+      expect(doc.head?.children[0]?.children).toEqual([]);
+      expect(doc.body.children).toHaveLength(1);
+      expect(doc.body.children[0]).toMatchObject({ kind: "div", id: "kept" });
+      expect((doc.body.children[0] as DivNode).children[0]).toMatchObject({
+        kind: "p",
+        children: [
+          { kind: "text", value: "body " },
+          {
+            kind: "span",
+            children: [{ kind: "text", value: "nested" }],
+          },
+        ],
+      });
     });
   });
 
