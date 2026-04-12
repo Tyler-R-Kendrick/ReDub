@@ -275,6 +275,7 @@ function compileMetadataSlotChildren(
     if (el.type === Redub.Metadata) {
       flushInlineChildren();
       result.push(compileMetadata(el.props));
+      return;
     }
   });
 
