@@ -70,17 +70,22 @@ Based on the user interview, fill in these components:
 
 ### Skill Writing Guide
 
+#### Skill Directory
+
+**The only supported location for skills in this project is `.agents/skills/`.** All skills must live directly under `.agents/skills/<skill-name>/`. Other coding agent skill directories (e.g. `.claude/skills/`, `.roo/skills/`, a top-level `skills/`, etc.) are **not supported** — do not create or populate them. If another coding agent needs to discover a skill, it must use a symlink pointing into `.agents/skills/`.
+
 #### Anatomy of a Skill
 
 ```
-skill-name/
-├── SKILL.md (required)
-│   ├── YAML frontmatter (name, description required)
-│   └── Markdown instructions
-└── Bundled Resources (optional)
-    ├── scripts/    - Executable code for deterministic/repetitive tasks
-    ├── references/ - Docs loaded into context as needed
-    └── assets/     - Files used in output (templates, icons, fonts)
+.agents/skills/
+└── skill-name/
+    ├── SKILL.md (required)
+    │   ├── YAML frontmatter (name, description required)
+    │   └── Markdown instructions
+    └── Bundled Resources (optional)
+        ├── scripts/    - Executable code for deterministic/repetitive tasks
+        ├── references/ - Docs loaded into context as needed
+        └── assets/     - Files used in output (templates, icons, fonts)
 ```
 
 #### Progressive Disclosure
