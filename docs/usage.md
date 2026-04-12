@@ -30,7 +30,7 @@ Optional metadata container for:
 - `<Agent />`
 - `<Pronunciation />`
 
-`<Agent />` and `<Pronunciation />` must be nested inside `<Redub.Metadata>`.
+`<Agent />` and `<Pronunciation />` must be nested inside `<Redub.Metadata>`. Placing either component directly under `<Redub>` or `<Redub.Head>` throws a compiler error.
 
 ### Body content
 
@@ -118,7 +118,7 @@ Compiler failures are deterministic and intended to be tested:
 
 - `compile()` rejects roots that are not `<Redub>`
 - multiple `<Redub.Head>` nodes are rejected
-- `<Agent>` and `<Pronunciation>` are rejected outside `<Redub.Metadata>`
+- `<Agent>` and `<Pronunciation>` are rejected when placed directly under `<Redub>`, `<Redub.Head>`, or inside a `<div>`
 - invalid `fps` and frame inputs raise `RangeError`
 
 ## Output

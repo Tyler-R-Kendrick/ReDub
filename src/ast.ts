@@ -247,8 +247,18 @@ function compileHeadChildren(children: React.ReactNode): Array<MetadataNode> {
   React.Children.forEach(children, (child) => {
     if (child == null || child === false) return;
 
-    if (React.isValidElement(child) && child.type === Redub.Metadata) {
-      result.push(compileMetadata(child.props as Record<string, unknown>));
+    if (!React.isValidElement(child)) return;
+
+    const el = child as React.ReactElement<Record<string, unknown>>;
+
+    if (el.type === Agent || el.type === Pronunciation) {
+      throw new Error(
+        `<${el.type === Agent ? "Agent" : "Pronunciation"}> may only appear inside <Redub.Metadata>, not as a direct child of <Redub.Head>.`
+      );
+    }
+
+    if (el.type === Redub.Metadata) {
+      result.push(compileMetadata(el.props));
     }
   });
 

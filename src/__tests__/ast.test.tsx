@@ -329,6 +329,30 @@ describe("compile()", () => {
         )
       ).toThrow(/<Pronunciation> may only appear inside <Redub.Metadata>/);
     });
+
+    it("throws when <Agent> is a direct child of <Redub.Head>", () => {
+      expect(() =>
+        compile(
+          <Redub>
+            <Redub.Head>
+              <Agent id="c1" />
+            </Redub.Head>
+          </Redub>
+        )
+      ).toThrow(/<Agent> may only appear inside <Redub.Metadata>, not as a direct child of <Redub.Head>/);
+    });
+
+    it("throws when <Pronunciation> is a direct child of <Redub.Head>", () => {
+      expect(() =>
+        compile(
+          <Redub>
+            <Redub.Head>
+              <Pronunciation target="SQL" alias="sequel" />
+            </Redub.Head>
+          </Redub>
+        )
+      ).toThrow(/<Pronunciation> may only appear inside <Redub.Metadata>, not as a direct child of <Redub.Head>/);
+    });
   });
 
   describe("misplaced metadata components", () => {
