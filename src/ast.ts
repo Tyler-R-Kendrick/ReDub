@@ -241,48 +241,6 @@ function compileMetadata(props: Record<string, unknown>): MetadataNode {
   };
 }
 
-function compileMetadataSlotChildren(
-  children: React.ReactNode
-): Array<MetadataNode> {
-  const result: Array<MetadataNode> = [];
-  const inlineChildren: Array<AgentNode | PronunciationNode> = [];
-
-  const flushInlineChildren = (): void => {
-    if (inlineChildren.length === 0) return;
-    result.push({
-      kind: "metadata",
-      children: [...inlineChildren],
-    });
-    inlineChildren.length = 0;
-  };
-
-  React.Children.forEach(children, (child) => {
-    if (child == null || child === false) return;
-    if (!React.isValidElement(child)) return;
-
-    const el = child as React.ReactElement<Record<string, unknown>>;
-
-    if (el.type === Agent) {
-      inlineChildren.push(compileAgent(el.props));
-      return;
-    }
-
-    if (el.type === Pronunciation) {
-      inlineChildren.push(compilePronunciation(el.props));
-      return;
-    }
-
-    if (el.type === Redub.Metadata) {
-      flushInlineChildren();
-      result.push(compileMetadata(el.props));
-      return;
-    }
-  });
-
-  flushInlineChildren();
-  return result;
-}
-
 function compileHeadChildren(children: React.ReactNode): Array<MetadataNode> {
   const result: Array<MetadataNode> = [];
 
@@ -304,14 +262,6 @@ function compileHeadChildren(children: React.ReactNode): Array<MetadataNode> {
       return;
     }
 
-    if (el.type === Redub.Slot) {
-      const name = el.props.name as string | undefined;
-      if (name === "metadata") {
-        result.push(
-          ...compileMetadataSlotChildren(el.props.children as React.ReactNode)
-        );
-      }
-    }
   });
 
   return result;
@@ -366,17 +316,11 @@ export function compile(
       explicitHeadChildren = compileHeadChildren(
         el.props.children as React.ReactNode
       );
-    } else if (el.type === Redub.Slot) {
-      const name = el.props.name as string | undefined;
-      if (name === "head") {
-        slottedHeadChildren.push(
-          ...compileHeadChildren(el.props.children as React.ReactNode)
-        );
-      } else if (name === "metadata") {
-        slottedHeadChildren.push(
-          ...compileMetadataSlotChildren(el.props.children as React.ReactNode)
-        );
-      }
+    } else if (
+      el.type === Redub.Metadata &&
+      (el.props.slot as string | undefined) === "metadata"
+    ) {
+      slottedHeadChildren.push(compileMetadata(el.props));
     } else if (el.type === Agent || el.type === Pronunciation) {
       throw new Error(
         `<${el.type === Agent ? "Agent" : "Pronunciation"}> may only appear inside <Redub.Metadata>, not as a direct child of <Redub>.`

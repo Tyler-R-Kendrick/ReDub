@@ -23,7 +23,7 @@ Supported document props:
 - `scriptType`
 - `scriptRepresents`
 
-### `Redub.Head`, `Redub.Metadata`, and named slots
+### `Redub.Head`, `Redub.Metadata`, and HTML slots
 
 Optional metadata container for:
 
@@ -32,12 +32,12 @@ Optional metadata container for:
 
 `<Agent />` and `<Pronunciation />` must be nested inside `<Redub.Metadata>`. Placing either component directly under `<Redub>` or `<Redub.Head>` throws a compiler error.
 
-You can also use named slots for optional extension:
+You can also use HTML `slot` attributes for optional extension:
 
-- `<Redub.Slot name="head">...</Redub.Slot>`
-- `<Redub.Slot name="metadata">...</Redub.Slot>`
+- `<Redub.Head slot="head">...</Redub.Head>`
+- `<Redub.Metadata slot="metadata">...</Redub.Metadata>`
 
-`name="metadata"` accepts either direct `<Agent />` / `<Pronunciation />` children or nested `<Redub.Metadata>` blocks.
+`slot="metadata"` can be used on top-level `<Redub.Metadata>` to merge additional metadata into the compiled `<head>`.
 
 ### Body content
 
@@ -110,10 +110,10 @@ import { Redub, Agent, Pronunciation, compile } from "redub";
 
 const document = compile(
   <Redub xmlLang="en">
-    <Redub.Slot name="metadata">
+    <Redub.Metadata slot="metadata">
       <Agent id="character_1" type="character" alias="ASSANE" />
       <Pronunciation target="SQL" alias="sequel" />
-    </Redub.Slot>
+    </Redub.Metadata>
     <div begin="10s" end="13s">
       <p>
         <span begin="0s">Hello</span>

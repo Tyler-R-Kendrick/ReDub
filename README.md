@@ -31,15 +31,15 @@ const document = compile(
 const xml = serialize(document);
 ```
 
-You can also use named slots to optionally extend head/metadata:
+You can also use HTML `slot` attributes to optionally extend head/metadata:
 
 ```tsx
 const document = compile(
   <Redub xmlLang="en">
-    <Redub.Slot name="metadata">
+    <Redub.Metadata slot="metadata">
       <Agent id="host" type="character" alias="Narrator" />
       <Pronunciation target="SQL" alias="sequel" />
-    </Redub.Slot>
+    </Redub.Metadata>
     <div begin="0s" end="2s">
       <p>
         <span>Hello world</span>

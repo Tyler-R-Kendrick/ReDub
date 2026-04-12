@@ -24,24 +24,22 @@ export interface RedubProps {
 }
 
 export interface HeadProps {
+  /** HTML slot name (e.g. "head"). */
+  slot?: string;
   children?: React.ReactNode;
 }
 
 export interface MetadataProps {
-  children?: React.ReactNode;
-}
-
-export type SlotName = "head" | "metadata";
-
-export interface SlotProps {
-  /** Named slot for extending or overriding authoring sections. */
-  name: SlotName;
+  /** HTML slot name (e.g. "metadata"). */
+  slot?: string;
   children?: React.ReactNode;
 }
 
 export interface AgentProps {
   /** Unique identifier for the agent. */
   id: string;
+  /** HTML slot name. */
+  slot?: string;
   /** Agent type (e.g. "character"). */
   type?: string;
   /** Display alias / name for the agent. */
@@ -51,6 +49,8 @@ export interface AgentProps {
 export interface PronunciationProps {
   /** The word or phrase whose pronunciation is being specified. */
   target: string;
+  /** HTML slot name. */
+  slot?: string;
   /** Alternative alias to substitute when speaking. */
   alias?: string;
   /** IPA phonetic representation. */
@@ -87,16 +87,7 @@ export const Head: React.FC<HeadProps> = () => null;
  */
 export const Metadata: React.FC<MetadataProps> = () => null;
 
-/**
- * Named slot component for extending optional document sections.
- *
- * Supported names:
- * - "head"
- * - "metadata"
- */
-export const Slot: React.FC<SlotProps> = () => null;
-
-export const Redub = Object.assign(RedubRoot, { Head, Metadata, Slot });
+export const Redub = Object.assign(RedubRoot, { Head, Metadata });
 
 /**
  * Declares a named agent (speaker) in the document metadata.

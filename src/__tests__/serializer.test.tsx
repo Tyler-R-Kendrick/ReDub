@@ -252,10 +252,10 @@ describe("serialize()", () => {
     it("serializes metadata from named slots", () => {
       const xml = xmlFrom(
         <Redub>
-          <Redub.Slot name="metadata">
+          <Redub.Metadata slot="metadata">
             <Agent id="slot-agent" />
             <Pronunciation target="SQL" alias="sequel" />
-          </Redub.Slot>
+          </Redub.Metadata>
         </Redub>
       );
 

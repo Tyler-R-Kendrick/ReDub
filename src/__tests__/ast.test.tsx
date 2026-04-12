@@ -354,14 +354,14 @@ describe("compile()", () => {
       ).toThrow(/<Pronunciation> may only appear inside <Redub.Metadata>, not as a direct child of <Redub.Head>/);
     });
 
-    it("compiles <Redub.Slot name=\"head\"> with nested metadata", () => {
+    it("compiles <Redub.Head slot=\"head\"> with nested metadata", () => {
       const doc = compile(
         <Redub>
-          <Redub.Slot name="head">
+          <Redub.Head slot="head">
             <Redub.Metadata>
               <Agent id="slot-head-agent" />
             </Redub.Metadata>
-          </Redub.Slot>
+          </Redub.Head>
         </Redub>
       );
 
@@ -372,13 +372,13 @@ describe("compile()", () => {
       });
     });
 
-    it("compiles <Redub.Slot name=\"metadata\"> into implicit metadata", () => {
+    it("compiles <Redub.Metadata slot=\"metadata\"> as slotted metadata", () => {
       const doc = compile(
         <Redub>
-          <Redub.Slot name="metadata">
+          <Redub.Metadata slot="metadata">
             <Agent id="slot-meta-agent" />
             <Pronunciation target="SQL" alias="sequel" />
-          </Redub.Slot>
+          </Redub.Metadata>
         </Redub>
       );
 
@@ -400,9 +400,9 @@ describe("compile()", () => {
               <Agent id="existing-agent" />
             </Redub.Metadata>
           </Redub.Head>
-          <Redub.Slot name="metadata">
+          <Redub.Metadata slot="metadata">
             <Agent id="slotted-agent" />
-          </Redub.Slot>
+          </Redub.Metadata>
         </Redub>
       );
 
