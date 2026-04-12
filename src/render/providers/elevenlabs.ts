@@ -40,6 +40,11 @@ function toElevenLabsFormat(format: AudioFormat): string {
     case "ogg":  return "ogg_vorbis_44100_128";
     case "flac": return "flac_44100";
     case "aac":  return "aac_44100_128";
+    default:
+      throw new Error(
+        `Unsupported ElevenLabs audio format: ${String(format)}. ` +
+          "Supported formats are: mp3, wav, ogg, flac, aac."
+      );
   }
 }
 

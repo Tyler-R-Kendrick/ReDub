@@ -114,10 +114,15 @@ function encodeWav(samples: Float32Array, sampleRate: number): Uint8Array {
   writeString(36, "data");
   view.setUint32(40, dataSize, true);
 
-  // Clamp float32 [-1, 1] → int16
+  // Clamp float32 [-1, 1] → int16, rounding to the nearest integer and
+  // using the full [-32768, 32767] range so -1.0 maps to -32768 correctly.
   for (let i = 0; i < numSamples; i++) {
     const clamped = Math.max(-1, Math.min(1, samples[i]));
-    view.setInt16(44 + i * 2, clamped * 0x7fff, true);
+    const pcmSample =
+      clamped < 0
+        ? Math.round(clamped * 0x8000)
+        : Math.round(clamped * 0x7fff);
+    view.setInt16(44 + i * 2, pcmSample, true);
   }
 
   return new Uint8Array(buffer);
@@ -178,10 +183,16 @@ export class HuggingFaceLocalProvider
    * Lazily initialise and cache the Transformers.js TTS pipeline.
    * Dynamic import keeps `@huggingface/transformers` out of the synchronous
    * module graph — callers that never instantiate this provider pay no cost.
+   *
+   * The promise is cleared on rejection so transient failures (e.g. network
+   * errors during model download) allow subsequent render() calls to retry.
    */
   private getSynthesizer(): Promise<TJSSynthesizer> {
     if (!this.synthesizerPromise) {
-      this.synthesizerPromise = this.initSynthesizer();
+      this.synthesizerPromise = this.initSynthesizer().catch((error) => {
+        this.synthesizerPromise = null;
+        throw error;
+      });
     }
     return this.synthesizerPromise;
   }

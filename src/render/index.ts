@@ -3,8 +3,10 @@
  *
  * Usage:
  * ```ts
- * import { compile } from "redub";
- * import { render, ElevenLabsProvider, OpenAIProvider } from "redub/render";
+ * import {
+ *   compile, render,
+ *   ElevenLabsProvider, OpenAIProvider, HuggingFaceLocalProvider,
+ * } from "redub";
  *
  * const doc = compile(<Redub xmlLang="en">…</Redub>);
  *

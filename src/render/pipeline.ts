@@ -74,8 +74,7 @@ export function extractSegments(doc: DocumentNode): RenderSegment[] {
  *
  * @example
  * ```ts
- * import { compile } from "redub";
- * import { render, ElevenLabsProvider } from "redub/render";
+ * import { compile, render, ElevenLabsProvider } from "redub";
  *
  * const doc = compile(<Redub xmlLang="en">…</Redub>);
  * const results = await render(doc, new ElevenLabsProvider({ apiKey, voiceId }), { format: "mp3" });

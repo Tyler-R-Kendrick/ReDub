@@ -2,8 +2,6 @@
  * OpenAI text-to-speech provider for the ReDub render pipeline.
  *
  * Uses the OpenAI Audio Speech API (models: tts-1, tts-1-hd).
- * OpenAI Whisper (speech-to-text) is the underlying technology for the
- * OpenAI audio models referenced in this project.
  *
  * @see https://platform.openai.com/docs/api-reference/audio/createSpeech
  */
@@ -53,9 +51,20 @@ function toOpenAIFormat(format: AudioFormat): string {
   switch (format) {
     case "mp3":  return "mp3";
     case "wav":  return "wav";
-    case "ogg":  return "opus";
+    case "ogg":
+      // OpenAI uses Opus inside an OGG container ("opus"), while other
+      // providers (e.g. ElevenLabs) use Vorbis. To avoid silent codec
+      // mismatches across providers, callers must use a format that is
+      // portable. Throw early with a clear message.
+      throw new Error(
+        'OpenAIProvider does not support AudioFormat "ogg". ' +
+          'OpenAI uses the Opus codec which is not portable across providers. ' +
+          'Use "mp3", "wav", "flac", or "aac" instead.'
+      );
     case "flac": return "flac";
     case "aac":  return "aac";
+    default:
+      throw new Error(`Unsupported OpenAI audio format: ${String(format)}`);
   }
 }
 

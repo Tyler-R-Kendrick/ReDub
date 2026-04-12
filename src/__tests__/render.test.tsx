@@ -241,7 +241,7 @@ describe("ElevenLabsProvider", () => {
   const fakeAudio = makeAudio(8);
 
   beforeEach(() => {
-    globalThis.fetch = jest.fn().mockResolvedValue({
+    jest.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
       arrayBuffer: async () => fakeAudio.buffer,
     } as Response);
@@ -353,7 +353,7 @@ describe("OpenAIProvider", () => {
   const fakeAudio = makeAudio(8);
 
   beforeEach(() => {
-    globalThis.fetch = jest.fn().mockResolvedValue({
+    jest.spyOn(globalThis, "fetch").mockResolvedValue({
       ok: true,
       arrayBuffer: async () => fakeAudio.buffer,
     } as Response);
@@ -387,7 +387,6 @@ describe("OpenAIProvider", () => {
     const cases: Array<[OpenAIRenderOptions["format"], string]> = [
       ["mp3", "mp3"],
       ["wav", "wav"],
-      ["ogg", "opus"],
       ["flac", "flac"],
       ["aac", "aac"],
     ];
@@ -400,6 +399,13 @@ describe("OpenAIProvider", () => {
       );
       expect(body.response_format).toBe(expectedResponseFormat);
     }
+  });
+
+  it("throws for AudioFormat 'ogg' because OpenAI uses Opus (not portable)", async () => {
+    const provider = new OpenAIProvider({ apiKey: "k", voice: "echo" });
+    await expect(
+      provider.render([{ text: "Test" }], { format: "ogg" })
+    ).rejects.toThrow('AudioFormat "ogg"');
   });
 
   it("uses tts-1 as the default model", async () => {
@@ -477,10 +483,28 @@ describe("HuggingFaceLocalProvider", () => {
     expect(provider.name).toBe("huggingface-local");
   });
 
-  it("uses the default model when none is provided", async () => {
-    // Verify config defaults flow through by inspecting the provider's name.
+  it("uses 'Xenova/speecht5_tts' as the default model and false for quantized", async () => {
+    // Verify config defaults by spying on initSynthesizer and confirming
+    // the pipeline is called with the expected model and quantized=false.
     const provider = new HuggingFaceLocalProvider();
-    expect(provider.name).toBe("huggingface-local");
+    const fakeSynth = jest.fn().mockResolvedValue({
+      audio: fakeSamples,
+      sampling_rate: fakeSamplingRate,
+    });
+    let capturedModel: string | undefined;
+    let capturedQuantized: boolean | undefined;
+    jest.spyOn(provider as any, "initSynthesizer").mockImplementation(
+      async function (this: any) {
+        capturedModel = this.config.model;
+        capturedQuantized = this.config.quantized;
+        return fakeSynth;
+      }
+    );
+
+    await provider.render([{ text: "Hi" }], {});
+
+    expect(capturedModel).toBe("Xenova/speecht5_tts");
+    expect(capturedQuantized).toBe(false);
   });
 
   it("returns a WAV-encoded Uint8Array with format 'wav'", async () => {
