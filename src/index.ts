@@ -29,6 +29,24 @@ export type {
 export { compile } from "./ast";
 export { serialize } from "./serializer";
 
+export {
+  render,
+  extractSegments,
+  ElevenLabsProvider,
+  OpenAIProvider,
+} from "./render";
+export type {
+  AudioFormat,
+  RenderConfig,
+  RenderSegment,
+  RenderResult,
+  RenderProvider,
+  ElevenLabsConfig,
+  OpenAIConfig,
+  OpenAIVoice,
+  OpenAITTSModel,
+} from "./render";
+
 export type {
   Node,
   DocumentNode,
